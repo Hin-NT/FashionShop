@@ -2,9 +2,13 @@ package com.example.FashionShop.controller;
 
 import com.example.FashionShop.dto.OrderDTO;
 import com.example.FashionShop.dto.ResponseDTO;
+import com.example.FashionShop.enums.OrderStatus;
+import com.example.FashionShop.enums.PeriodType;
 import com.example.FashionShop.model.Order;
 import com.example.FashionShop.service.interfaces.IOrder;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +20,7 @@ import java.util.List;
 @RequestMapping("/api/orders")
 public class OrderController {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
     private final IOrder orderService;
 
     @GetMapping("")
@@ -60,5 +65,19 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order not found");
         }
         return orderService.cancelOrder(order);
+    }
+
+    @GetMapping("/revenue")
+    public ResponseEntity<Double> getTotalRevenueByPeriodTime(
+            @RequestParam("periodType") PeriodType periodType,
+            @RequestParam("quantity") int quantity) {
+
+        return orderService.getTotalRevenueByPeriodTime(periodType, quantity);
+    }
+
+    @PutMapping("/{orderId}/order-status")
+    public ResponseEntity<String> updateOrderStatus(@PathVariable String orderId, @RequestParam OrderStatus status) {
+        System.out.println("Order Status: " + status);
+        return orderService.updateOrderStatus(orderId, status);
     }
 }

@@ -3,6 +3,7 @@ package com.example.FashionShop.service.implement;
 import com.example.FashionShop.dto.OrderDTO;
 import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.enums.OrderStatus;
+import com.example.FashionShop.enums.PeriodType;
 import com.example.FashionShop.model.Order;
 import com.example.FashionShop.model.OrderDetail;
 import com.example.FashionShop.model.ProductColorSize;
@@ -19,7 +20,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,9 +67,9 @@ public class OrderService implements IOrder {
         order.setCreatedAt(currentTime);
         order.setUpdatedAt(currentTime);
 
-        if (order.getOrderDetails() == null || order.getOrderDetails().isEmpty()) {
+        if (order.getOrderDetails() == null || order.getOrderDetails().isEmpty() || order.getCustomer() == null || order.getCustomer().getCustomerId() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ResponseDTO<>(null, "Order details is empty"));
+                    .body(new ResponseDTO<>(null, "Order details and Customer can't be empty"));
         }
 
         try {
@@ -234,4 +237,55 @@ public class OrderService implements IOrder {
         return orderRepository.findById(orderId).orElse(null);
     }
 
+    @Override
+    public ResponseEntity<Double> getTotalRevenueByPeriodTime(PeriodType periodType, long quantity) {
+        try {
+            LocalDate endDate = LocalDate.now();
+            LocalDate startDate = switch (periodType) {
+                case WEEK -> endDate.minusWeeks(quantity);
+                case MONTH -> endDate.minusMonths(quantity);
+                case QUARTER -> endDate.minusMonths(quantity * 3);
+                case YEAR -> endDate.minusYears(quantity);
+                default -> throw new IllegalArgumentException("Invalid period type");
+            };
+            List<Order> orders = orderRepository.findByOrderStatusAndDateBetween(OrderStatus.DELIVERED, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+
+            double total = orders.stream()
+                    .mapToDouble(Order::getTotalPrice)
+                    .sum();
+            return ResponseEntity.status(HttpStatus.OK).body(total);
+        } catch (Exception e) {
+            logger.error("Error occurred while fetching total revenue: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(0.0);
+        }
+    }
+
+    private boolean isStatusAChangeAllowed(OrderStatus orderStatus) {
+        return orderStatus == OrderStatus.SHIPPED ||
+                orderStatus == OrderStatus.DELIVERED ||
+                orderStatus == OrderStatus.RETURNED;
+    }
+
+    @Override
+    public ResponseEntity<String> updateOrderStatus(String orderId, OrderStatus orderStatus) {
+        if (!isStatusAChangeAllowed(orderStatus)) {
+            logger.error("Order with ID {} is not a change allowed status", orderId);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Order with ID: " + orderId + " is not a change allowed status");
+        }
+        try {
+            Order order = orderRepository.findById(orderId).orElse(null);
+
+            if (order == null) {
+                logger.error("Order with ID {} not found", orderId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order with ID: " + orderId + " not found");
+            }
+            order.setUpdatedAt(LocalDateTime.now());
+            order.setOrderStatus(orderStatus);
+            orderRepository.save(order);
+            return ResponseEntity.status(HttpStatus.OK).body("Order updated successfully");
+        } catch (Exception e) {
+            logger.error("Error occurred while updating order: {}", orderId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while updating order: " + e.getMessage());
+        }
+    }
 }

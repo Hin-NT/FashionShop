@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: FashionShop
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/fashion_shop
+    username: root
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true
+          dialect: org.hibernate.dialect.MySQL8Dialect
+
+logging:
+  level:
+    root: INFO
+    com.example.FashionShopAPI: DEBUG
+
+cloudinary:
+  cloud_name: "du4kvj6e3"
+  api_key: "435791621522184"
+  api_secret: "fedNaZJOGyfjxZpqzAeUQ5hV8O4"
+

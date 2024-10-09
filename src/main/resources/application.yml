@@ -3,9 +3,9 @@ spring:
     name: FashionShop
 
   datasource:
-    url: jdbc:mysql://localhost:3306/fashion_shop
+    url: jdbc:mysql://mysql-g0ov.railway.internal:3306/railway
     username: root
-    password: ""
+    password: "aEomdZEOBAIXOxiGPcSffBgDHZzJGfzN"
 
   jpa:
     hibernate:

@@ -1,9 +1,9 @@
 package com.example.FashionShop.service.implement;
 
+import com.example.FashionShop.dto.ProductColorSizeDTO;
 import com.example.FashionShop.dto.ProductDiscountDTO;
 import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.model.ProductDiscount;
-import com.example.FashionShop.repository.ProductColorSizeRepository;
 import com.example.FashionShop.repository.ProductDiscountRepository;
 import com.example.FashionShop.service.interfaces.IProductDiscount;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +24,6 @@ public class ProductDiscountService implements IProductDiscount {
     private final Logger logger = LoggerFactory.getLogger(ProductDiscountService.class);
 
     private final ProductDiscountRepository productDiscountRepository;
-
-    private final ProductColorSizeRepository productColorSizeRepository;
-
 
     @Override
     public ResponseEntity<ResponseDTO<List<ProductDiscountDTO>>> getAll() {
@@ -85,10 +82,12 @@ public class ProductDiscountService implements IProductDiscount {
             Optional<ProductDiscount> productDiscountOptional = productDiscountRepository.findById(productDiscount.getProductDiscountId());
             if (productDiscountOptional.isPresent()) {
                 ProductDiscount discount = productDiscountOptional.get();
-                ProductDiscountDTO productDiscountDTO = new ProductDiscountDTO(discount.getProductDiscountId(),
-                        discount.getProductColorSize(),
+                ProductDiscountDTO productDiscountDTO = new ProductDiscountDTO(
+                        discount.getProductDiscountId(),
+                        new ProductColorSizeDTO(discount.getProductColorSize(), 0),
                         discount.getDiscount(),
-                        discount.getPercent());
+                        discount.getPercent()
+                );
                 return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(productDiscountDTO, "ProductDiscount found"));
             } else {
                 logger.warn("ProductDiscount with ID: {} not found in findById", productDiscount.getProductDiscountId());

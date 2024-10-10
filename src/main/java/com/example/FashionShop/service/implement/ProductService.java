@@ -1,10 +1,8 @@
 package com.example.FashionShop.service.implement;
 
-import com.example.FashionShop.dto.ColorDTO;
 import com.example.FashionShop.dto.ProductDTO;
 import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.model.Product;
-import com.example.FashionShop.model.ProductColor;
 import com.example.FashionShop.model.Style;
 import com.example.FashionShop.repository.ProductRepository;
 import com.example.FashionShop.repository.StyleRepository;

@@ -1,6 +1,5 @@
 package com.example.FashionShop.service.implement;
 
-import com.example.FashionShop.dto.ColorDTO;
 import com.example.FashionShop.dto.DiscountDTO;
 import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.enums.DiscountStatus;

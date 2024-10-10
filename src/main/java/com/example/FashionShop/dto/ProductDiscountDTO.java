@@ -1,7 +1,6 @@
 package com.example.FashionShop.dto;
 
 import com.example.FashionShop.model.Discount;
-import com.example.FashionShop.model.ProductColorSize;
 import com.example.FashionShop.model.ProductDiscount;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -15,14 +14,15 @@ import lombok.experimental.FieldDefaults;
 public class ProductDiscountDTO {
 
     String productDiscountId;
-    ProductColorSize productColorSize;
+    ProductColorSizeDTO productColorSize;
     Discount discount;
     int percent;
 
     public ProductDiscountDTO(ProductDiscount productDiscount) {
         this.productDiscountId = productDiscount.getProductDiscountId();
-        this.productColorSize = productDiscount.getProductColorSize();
+        this.productColorSize = new ProductColorSizeDTO(productDiscount.getProductColorSize(), 0);
         this.discount = productDiscount.getDiscount();
         this.percent = productDiscount.getPercent();
     }
+
 }

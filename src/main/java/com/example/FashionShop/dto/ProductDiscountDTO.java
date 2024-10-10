@@ -15,13 +15,13 @@ public class ProductDiscountDTO {
 
     String productDiscountId;
     ProductColorSizeDTO productColorSize;
-    Discount discount;
+    DiscountDTO discount;
     int percent;
 
     public ProductDiscountDTO(ProductDiscount productDiscount) {
         this.productDiscountId = productDiscount.getProductDiscountId();
         this.productColorSize = new ProductColorSizeDTO(productDiscount.getProductColorSize(), 0);
-        this.discount = productDiscount.getDiscount();
+        this.discount = new DiscountDTO(productDiscount.getDiscount(), 0);
         this.percent = productDiscount.getPercent();
     }
 

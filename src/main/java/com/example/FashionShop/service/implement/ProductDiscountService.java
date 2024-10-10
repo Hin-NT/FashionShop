@@ -28,7 +28,7 @@ public class ProductDiscountService implements IProductDiscount {
     @Override
     public ResponseEntity<ResponseDTO<List<ProductDiscountDTO>>> getAll() {
         try {
-            List<ProductDiscount> productDiscounts = (List<ProductDiscount>) productDiscountRepository.findAll();
+            List<ProductDiscount> productDiscounts = productDiscountRepository.findAll();
 
             if (productDiscounts.isEmpty()) {
                 logger.info("No ProductDiscounts found");
@@ -82,12 +82,7 @@ public class ProductDiscountService implements IProductDiscount {
             Optional<ProductDiscount> productDiscountOptional = productDiscountRepository.findById(productDiscount.getProductDiscountId());
             if (productDiscountOptional.isPresent()) {
                 ProductDiscount discount = productDiscountOptional.get();
-                ProductDiscountDTO productDiscountDTO = new ProductDiscountDTO(
-                        discount.getProductDiscountId(),
-                        new ProductColorSizeDTO(discount.getProductColorSize(), 0),
-                        discount.getDiscount(),
-                        discount.getPercent()
-                );
+                ProductDiscountDTO productDiscountDTO = new ProductDiscountDTO(discount);
                 return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(productDiscountDTO, "ProductDiscount found"));
             } else {
                 logger.warn("ProductDiscount with ID: {} not found in findById", productDiscount.getProductDiscountId());

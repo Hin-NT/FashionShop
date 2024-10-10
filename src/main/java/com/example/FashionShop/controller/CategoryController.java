@@ -32,7 +32,7 @@ public class CategoryController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ResponseDTO<CategoryDTO>> getCategoryByCategoryName(@RequestParam String categoryName) {
+    public ResponseEntity<ResponseDTO<List<CategoryDTO>>> getCategoryByCategoryName(@RequestParam String categoryName) {
         if (categoryName == null || categoryName.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO<>(null, "CategoryName is required"));
         }

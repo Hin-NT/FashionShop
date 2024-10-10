@@ -32,7 +32,7 @@ public class ColorController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ResponseDTO<ColorDTO>> searchColor(@RequestParam String colorName) {
+    public ResponseEntity<ResponseDTO<List<ColorDTO>>> searchColor(@RequestParam String colorName) {
         if(colorName == null || colorName.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO<>(null, "ColorName is required"));
         }

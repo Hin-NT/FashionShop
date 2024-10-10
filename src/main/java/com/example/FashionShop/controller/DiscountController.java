@@ -33,7 +33,7 @@ public class DiscountController {
     }
 
     @GetMapping("/search/{discountName}")
-    public ResponseEntity<ResponseDTO<DiscountDTO>> getDiscountByName(@PathVariable String discountName) {
+    public ResponseEntity<ResponseDTO<List<DiscountDTO>>> getDiscountByName(@PathVariable String discountName) {
         if (discountName == null || discountName.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO<>(null, "DiscountName is required"));
         }

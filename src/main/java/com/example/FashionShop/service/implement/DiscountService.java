@@ -1,5 +1,6 @@
 package com.example.FashionShop.service.implement;
 
+import com.example.FashionShop.dto.ColorDTO;
 import com.example.FashionShop.dto.DiscountDTO;
 import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.enums.DiscountStatus;
@@ -36,9 +37,7 @@ public class DiscountService implements IDiscount {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
                         .body(new ResponseDTO<>(null, "No Discounts found"));
             }
-            List<DiscountDTO> discountDTOs = discounts.stream()
-                    .map(discount -> new DiscountDTO(discount, 0))
-                    .toList();
+            List<DiscountDTO> discountDTOs = this.convertEntityToDTO(discounts);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ResponseDTO<>(discountDTOs, "Discounts retrieved successfully"));
         } catch (Exception e) {
@@ -220,24 +219,21 @@ public class DiscountService implements IDiscount {
     }
 
     @Override
-    public ResponseEntity<ResponseDTO<DiscountDTO>> findDiscountByDiscountName(String discountName) {
+    public ResponseEntity<ResponseDTO<List<DiscountDTO>>> findDiscountByDiscountName(String discountName) {
         if (discountName == null || discountName.isEmpty()) {
             logger.info("Discount name is null or empty");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ResponseDTO<>(null, "Discount name is null or empty"));
         }
         try {
-            Optional<Discount> discountOptional = discountRepository.findDiscountByDiscountName(discountName);
-            if (discountOptional.isPresent()) {
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResponseDTO<>(new DiscountDTO(discountOptional.get(), 1),
-                                "Discount found"));
-            } else {
-                logger.warn("Discount with name: {} not found", discountName);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ResponseDTO<>(null,
-                                "Discount with name '" + discountName + "' not found"));
+            List<Discount> discounts = discountRepository.findDiscountsByDiscountName(discountName);
+            if (discounts.isEmpty()) {
+                logger.info("Discount with name {} not found", discountName);
+                return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(null, "Discount with name " + discountName + " not found"));
             }
+            List<DiscountDTO> discountDTOs = this.convertEntityToDTO(discounts);
+            logger.info("Color with name {} found", discountName);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(discountDTOs, "Discount retrieved successfully"));
         } catch (Exception e) {
             logger.error("Error occurred while fetching discount: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -277,4 +273,9 @@ public class DiscountService implements IDiscount {
         }
     }
 
+    private List<DiscountDTO> convertEntityToDTO(List<Discount> discounts) {
+        return discounts.stream()
+                .map(discount -> new DiscountDTO(discount, 0))
+                .toList();
+    }
 }

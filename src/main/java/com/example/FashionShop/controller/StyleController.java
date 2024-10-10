@@ -52,7 +52,7 @@ public class StyleController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ResponseDTO<StyleDTO>> findStyleByStyleName(@RequestParam String styleName) {
+    public ResponseEntity<ResponseDTO<List<StyleDTO>>> findStyleByStyleName(@RequestParam String styleName) {
         if (styleName == null || styleName.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }

@@ -53,7 +53,7 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ResponseDTO<ProductDTO>> getProductByProductName(@RequestParam String productName) {
+    public ResponseEntity<ResponseDTO<List<ProductDTO>>> getProductByProductName(@RequestParam String productName) {
         if (productName == null || productName.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO<>(null, "ProductName is required"));
         }

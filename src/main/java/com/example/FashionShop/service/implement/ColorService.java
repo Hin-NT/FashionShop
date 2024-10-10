@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -156,19 +157,16 @@ public class ColorService implements IColor {
     }
 
     @Override
-    public ResponseEntity<ResponseDTO<ColorDTO>> findColorByColorName(String colorName) {
+    public ResponseEntity<ResponseDTO<List<ColorDTO>>> findColorByColorName(String colorName) {
         try {
-            Optional<Color> colorOptional = colorRepository.findColorByColorName(colorName);
-            if (colorOptional.isPresent()) {
-                logger.info("Color found with name: {}", colorName);
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResponseDTO<>(new ColorDTO(colorOptional.get(), 0),
-                                "Color found with name: " + colorName));
-            } else {
-                logger.info("Color not found with name {}", colorName);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ResponseDTO<>(null, "Color not found with name: " + colorName));
+            List<Color> colors = colorRepository.findColorsByColorName(colorName);
+            if (colors.isEmpty()) {
+                logger.info("Color with name {} not found", colorName);
+                return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(null, "Color with name " + colorName + " not found"));
             }
+            List<ColorDTO> colorsDTO = this.convertEntityToDTO(colors);
+            logger.info("Color with name {} found", colorName);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(colorsDTO, "Colors retrieved successfully"));
         } catch (Exception e) {
             logger.error("Error occurred while fetching color: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -177,4 +175,9 @@ public class ColorService implements IColor {
         }
     }
 
+    private List<ColorDTO> convertEntityToDTO(List<Color> colors) {
+        return colors.stream()
+                .map(color -> new ColorDTO(color, 0))
+                .toList();
+    }
 }

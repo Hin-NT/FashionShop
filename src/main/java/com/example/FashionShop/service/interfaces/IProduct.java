@@ -5,6 +5,8 @@ import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.model.Product;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 public interface IProduct extends IService<Product, ProductDTO> {
-    ResponseEntity<ResponseDTO<ProductDTO>> findProductByProductName(String productName);
+    ResponseEntity<ResponseDTO<List<ProductDTO>>> findProductByProductName(String productName);
 }

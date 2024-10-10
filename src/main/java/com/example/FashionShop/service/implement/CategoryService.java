@@ -33,9 +33,7 @@ public class CategoryService implements ICategory {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
                         .body(new ResponseDTO<>(null, "No Categories found"));
             }
-            List<CategoryDTO> categoryDTOs = categories.stream()
-                    .map(category -> new CategoryDTO(category, 0))
-                    .toList();
+            List<CategoryDTO> categoryDTOs = this.convertEntityToDTO(categories);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ResponseDTO<>(categoryDTOs, "Categories retrieved successfully"));
         } catch (Exception e) {
@@ -158,20 +156,15 @@ public class CategoryService implements ICategory {
     }
 
     @Override
-    public ResponseEntity<ResponseDTO<CategoryDTO>> findCategoryByCategoryName(String categoryName) {
+    public ResponseEntity<ResponseDTO<List<CategoryDTO>>> findCategoryByCategoryName(String categoryName) {
         try {
-            Optional<Category> optionalCategory = categoryRepository.findCategoryByCategoryName(categoryName);
-
-            if (optionalCategory.isPresent()) {
-                logger.info("Category found with name: {}", categoryName);
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResponseDTO<>(new CategoryDTO(optionalCategory.get(), 0),
-                                "Category found with name: " + categoryName));
-            } else {
-                logger.info("Category not found with name: {}", categoryName);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ResponseDTO<>(null, "Category not found with name: " + categoryName));
+            List<Category> categories = categoryRepository.findCategoriesByCategoryName(categoryName);
+            if (categories.isEmpty()) {
+                logger.info("Category not found with name {}", categoryName);
+                return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(null, "Category with name " + categoryName + " not found"));
             }
+            List<CategoryDTO> categoryDTOs = this.convertEntityToDTO(categories);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(categoryDTOs, "Categories retrieved successfully"));
         } catch (Exception e) {
             logger.error("Error occurred while finding category: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -180,4 +173,9 @@ public class CategoryService implements ICategory {
         }
     }
 
+    private List<CategoryDTO> convertEntityToDTO(List<Category> categories) {
+        return categories.stream()
+                .map(category -> new CategoryDTO(category, 0))
+                .toList();
+    }
 }

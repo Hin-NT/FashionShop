@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,9 +32,7 @@ public class StyleService implements IStyle {
                 logger.info("No Styles found");
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new ResponseDTO<>(null, "No Styles found"));
             }
-            List<StyleDTO> styleDTOs = styles.stream()
-                    .map(style -> new StyleDTO(style, 0))
-                    .toList();
+            List<StyleDTO> styleDTOs = this.convertEntityToDTO(styles);
             return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(styleDTOs, "Styles retrieved successfully"));
         } catch (Exception e) {
             logger.error("Error occurred while fetching styles: {}", e.getMessage(), e);
@@ -134,19 +133,24 @@ public class StyleService implements IStyle {
     }
 
     @Override
-    public ResponseEntity<ResponseDTO<StyleDTO>> findStyleByStyleName(String styleName) {
+    public ResponseEntity<ResponseDTO<List<StyleDTO>>> findStyleByStyleName(String styleName) {
         try {
-            Optional<Style> styleOptional = styleRepository.findStyleByStyleName(styleName);
-            if (styleOptional.isPresent()) {
-                logger.info("Style found with name {}", styleName);
-                return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(new StyleDTO(styleOptional.get(), 0), "Style found with name " + styleName));
-            } else {
-                logger.info("Style not found with name {}", styleName);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseDTO<>(null, "Style not found with name " + styleName));
+            List<Style> styles = styleRepository.findStylesByStyleName(styleName);
+            if (styles.isEmpty()) {
+                logger.info("Style with name {} not found", styleName);
+                return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(null, "Style with name " + styleName + " not found"));
             }
+            List<StyleDTO> styleDTOs = this.convertEntityToDTO(styles);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(styleDTOs, "Style with name " + styleName + " found"));
         } catch (Exception e) {
             logger.error("Error occurred while fetching style {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO<>(null, "Error occurred while fetching style: " + e.getMessage()));
         }
+    }
+
+    private List<StyleDTO> convertEntityToDTO(List<Style> styles) {
+        return styles.stream()
+                .map(style -> new StyleDTO(style, 0))
+                .toList();
     }
 }

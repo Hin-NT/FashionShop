@@ -12,7 +12,7 @@ public interface IDiscount extends IService<Discount, DiscountDTO> {
 
     public void updateDiscountByDiscountStatus();
 
-    ResponseEntity<ResponseDTO<DiscountDTO>> findDiscountByDiscountName(String discountName);
+    ResponseEntity<ResponseDTO<List<DiscountDTO>>> findDiscountByDiscountName(String discountName);
 
     ResponseEntity<ResponseDTO<List<DiscountDTO>>> findDiscountByDiscountStatus(DiscountStatus discountStatus);
 }

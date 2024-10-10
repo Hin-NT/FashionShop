@@ -5,6 +5,8 @@ import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.model.Color;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 public interface IColor extends IService<Color, ColorDTO> {
-    ResponseEntity<ResponseDTO<ColorDTO>> findColorByColorName(String colorName);
+    ResponseEntity<ResponseDTO<List<ColorDTO>>> findColorByColorName(String colorName);
 }

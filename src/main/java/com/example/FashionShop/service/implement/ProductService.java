@@ -1,10 +1,11 @@
 package com.example.FashionShop.service.implement;
 
+import com.example.FashionShop.dto.ColorDTO;
 import com.example.FashionShop.dto.ProductDTO;
 import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.model.Product;
+import com.example.FashionShop.model.ProductColor;
 import com.example.FashionShop.model.Style;
-import com.example.FashionShop.repository.CategoryRepository;
 import com.example.FashionShop.repository.ProductRepository;
 import com.example.FashionShop.repository.StyleRepository;
 import com.example.FashionShop.service.interfaces.IProduct;
@@ -28,8 +29,6 @@ public class ProductService implements IProduct {
 
     private final ProductRepository productRepository;
 
-    private final CategoryRepository categoryRepository;
-
     private final StyleRepository styleRepository;
 
     @Override
@@ -41,9 +40,7 @@ public class ProductService implements IProduct {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
                         .body(new ResponseDTO<>(null, "No products found"));
             }
-            List<ProductDTO> productDTOs = products.stream()
-                    .map(product -> new ProductDTO(product, 0))
-                    .toList();
+            List<ProductDTO> productDTOs = this.convertEntityToDTO(products);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ResponseDTO<>(productDTOs, "Products retrieved successfully"));
         } catch (Exception e) {
@@ -172,20 +169,16 @@ public class ProductService implements IProduct {
     }
 
     @Override
-    public ResponseEntity<ResponseDTO<ProductDTO>> findProductByProductName(String productName) {
+    public ResponseEntity<ResponseDTO<List<ProductDTO>>> findProductByProductName(String productName) {
         try {
-            Optional<Product> optionalProduct = productRepository.findProductByProductName(productName);
-
-            if (optionalProduct.isPresent()) {
-                logger.info("Product found with name: {}", productName);
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResponseDTO<>(new ProductDTO(optionalProduct.get(), 0),
-                                "Product found successfully"));
-            } else {
-                logger.info("Product not found with name: {}", productName);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ResponseDTO<>(null, "Product not found with name: " + productName));
+            List<Product> products = productRepository.findProductsByProductName(productName);
+            if (products.isEmpty()) {
+                logger.info("Product with name {} not found", productName);
+                return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(null, "Product with name " + productName + " not found"));
             }
+            List<ProductDTO> productColors = this.convertEntityToDTO(products);
+            logger.info("Product with name {} found", productName);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(productColors, "Products retrieved successfully"));
         } catch (Exception e) {
             logger.error("Error occurred while finding product: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -194,4 +187,9 @@ public class ProductService implements IProduct {
         }
     }
 
+    private List<ProductDTO> convertEntityToDTO(List<Product> products) {
+        return products.stream()
+                .map(product -> new ProductDTO(product, 0))
+                .toList();
+    }
 }

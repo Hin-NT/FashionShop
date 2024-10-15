@@ -31,4 +31,5 @@ public class Category extends BaseEntity {
         this.categoryId = categoryId;
         this.categoryName = categoryName;
     }
+    
 }

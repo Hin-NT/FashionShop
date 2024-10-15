@@ -15,15 +15,15 @@ public class ColorDTO {
 
     String colorId;
     String colorName;
-    List<String> productColorList;
+    List<ProductColorDTO> productColors;
 
     public ColorDTO(Color color, int choose) {
         this.colorId = color.getColorId();
         this.colorName = color.getColorName();
         if (choose == 1) {
-            this.productColorList = color.getProductColorList()
+            this.productColors = color.getProductColorList()
                     .stream()
-                    .map(productColor -> productColor.getProductColorId())
+                    .map(productColor -> new ProductColorDTO(productColor, 0))
                     .toList();
         }
     }

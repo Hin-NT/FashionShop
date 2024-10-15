@@ -4,12 +4,8 @@ import com.example.FashionShop.dto.OrderDTO;
 import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.enums.OrderStatus;
 import com.example.FashionShop.enums.PeriodType;
-import com.example.FashionShop.model.Order;
-import com.example.FashionShop.model.OrderDetail;
-import com.example.FashionShop.model.ProductColorSize;
-import com.example.FashionShop.repository.OrderDetailRepository;
-import com.example.FashionShop.repository.OrderRepository;
-import com.example.FashionShop.repository.ProductColorSizeRepository;
+import com.example.FashionShop.model.*;
+import com.example.FashionShop.repository.*;
 import com.example.FashionShop.service.interfaces.IOrder;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -37,6 +33,8 @@ public class OrderService implements IOrder {
     private final OrderDetailRepository orderDetailRepository;
 
     private final ProductColorSizeRepository productColorSizeRepository;
+    private final ProductRepository productRepository;
+    private final CustomerRepository customerRepository;
 
     @Override
     public ResponseEntity<ResponseDTO<List<OrderDTO>>> getAll() {
@@ -63,42 +61,71 @@ public class OrderService implements IOrder {
     @Override
     public ResponseEntity<ResponseDTO<Order>> create(Order order) {
 
-        LocalDateTime currentTime = LocalDateTime.now();
-        order.setCreatedAt(currentTime);
-        order.setUpdatedAt(currentTime);
-
-        if (order.getOrderDetails() == null || order.getOrderDetails().isEmpty() || order.getCustomer() == null || order.getCustomer().getCustomerId() == null) {
+        if (order.getOrderDetails() == null || order.getOrderDetails().isEmpty()) {
+            logger.error("OrderDetails is null or empty");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ResponseDTO<>(null, "Order details and Customer can't be empty"));
+                    .body(new ResponseDTO<>(null, "OrderDetails is null or empty"));
+        }
+
+        if (order.getCustomer() == null || order.getCustomer().getCustomerId() == null
+                || order.getCustomer().getCustomerId().isBlank()) {
+            logger.error("Customer or CustomerId is null or blank");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ResponseDTO<>(null, " Customer or CustomerId is null or blank"));
         }
 
         try {
-            order.setOrderStatus(OrderStatus.PENDING);
-            Order orderSaved = orderRepository.save(order);
-            order.setOrderId(orderSaved.getOrderId());
-            for (OrderDetail orderDetail : order.getOrderDetails()) {
-                ProductColorSize productColorSize = productColorSizeRepository
-                        .findById(orderDetail.getProductColorSize().getProductColorSizeId())
-                        .orElseThrow(() -> new RuntimeException("ProductColorSize not found"));
-
-                int newQuantity = productColorSize.getQuantity() - orderDetail.getQuantity();
-                if (newQuantity < 0) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(new ResponseDTO<>(null,
-                                    "Not enough quantity for product: " + productColorSize.getProductColorSizeId()));
-                }
-                productColorSize.setQuantity(newQuantity);
-
-                productColorSizeRepository.save(productColorSize);
+            if (!customerRepository.existsById(order.getCustomer().getCustomerId())) {
+                logger.error("Customer does not exist");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ResponseDTO<>(null, "Customer does not exist"));
             }
-            logger.info("Order created successfully: {}", orderSaved);
+
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            order.setCreatedAt(currentDateTime);
+            order.setUpdatedAt(currentDateTime);
+
+            order.setOrderStatus(OrderStatus.PENDING);
+
+            orderRepository.save(order);
+
+            for (OrderDetail orderDetail : order.getOrderDetails()) {
+                if (orderDetail.getProductColorSize() == null || orderDetail.getProductColorSize().getProductColorSizeId() == null
+                        || orderDetail.getProductColorSize().getProductColorSizeId().isBlank()) {
+                    logger.error("ProductColorSize or ProductColorSizeID is null or blank");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new ResponseDTO<>(null, "ProductColorSize or ProductColorSizeID is null"));
+                }
+
+                Optional<ProductColorSize> productColorSizeOptional = productColorSizeRepository
+                        .findById(orderDetail.getProductColorSize().getProductColorSizeId());
+                if (productColorSizeOptional.isEmpty()) {
+                    logger.error("ProductColorSizeID not found");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ResponseDTO<>(null, "ProductColorSizeID not found"));
+                }
+
+                ProductColorSize product = productColorSizeOptional.get();
+
+                int newQuantity = product.getQuantity() - orderDetail.getProductColorSize().getQuantity();
+                if (newQuantity < 0) {
+                    logger.error("Quantity is negative");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new ResponseDTO<>(null, "Quantity is negative"));
+                }
+                product.setQuantity(newQuantity);
+                orderDetail.setOrder(new Order(order.getOrderId()));
+
+                orderDetailRepository.save(orderDetail);
+            }
+            logger.info("Order created successfully");
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ResponseDTO<>(order, "Order created successfully"));
         } catch (Exception e) {
-            logger.error("Error occurred while creating order: {} ", e.getMessage(), e);
+            logger.error("Error occurred while creating order: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ResponseDTO<>(null,
-                            "Error occurred while creating order" + e.getMessage()));
+                            "Error occurred while creating order: {}" + e.getMessage()));
         }
     }
 
@@ -115,34 +142,47 @@ public class OrderService implements IOrder {
 
     @Override
     public ResponseEntity<String> cancelOrder(Order order) {
+
         order.setOrderStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
         for (OrderDetail orderDetail : order.getOrderDetails()) {
-            ProductColorSize productColorSize = productColorSizeRepository.findById(orderDetail.getProductColorSize().getProductColorSizeId())
-                    .orElseThrow(() -> new RuntimeException("ProductColorSize not found"));
+            Optional<ProductColorSize> productColorSize = productColorSizeRepository
+                    .findById(orderDetail.getProductColorSize().getProductColorSizeId());
+            if (productColorSize.isEmpty()) {
+                logger.error("ProductColorSizeID not found");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("ProductColorSizeID not found");
+            }
+            ProductColorSize product = productColorSize.get();
 
-            int restoredQuantity = productColorSize.getQuantity() + orderDetail.getQuantity();
-            productColorSize.setQuantity(restoredQuantity);
+            int restoreQuantity = product.getQuantity() + orderDetail.getProductColorSize().getQuantity();
+            product.setQuantity(restoreQuantity);
 
-            productColorSizeRepository.save(productColorSize);
+            productColorSizeRepository.save(product);
         }
-        return ResponseEntity.status(HttpStatus.OK)
-                .body("Order cancelled successfully");
+        logger.info("Order cancelled successfully");
+        return ResponseEntity.status(HttpStatus.OK).body("Order cancelled successfully");
     }
 
     @Override
     public ResponseEntity<String> confirmOrder(String orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+
+        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        if (orderOptional.isEmpty()) {
+            logger.error("Order not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order not found");
+        }
+        Order order = orderOptional.get();
 
         if (!order.getOrderStatus().equals(OrderStatus.PENDING)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Order has been cancelled");
+            logger.error("Order status is not PENDING");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Order status is not PENDING");
         }
-
         order.setOrderStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body("Order confirmed successfully");
+        logger.info("Order confirmed successfully");
+        return ResponseEntity.status(HttpStatus.OK).body("Order confirmed successfully");
     }
 
     @Override
@@ -177,30 +217,89 @@ public class OrderService implements IOrder {
 
     @Override
     public ResponseEntity<ResponseDTO<Order>> update(Order order) {
-        String orderId = order.getOrderId();
+        if (order.getOrderDetails() == null || order.getOrderDetails().isEmpty()) {
+            logger.error("OrderDetails is null or empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ResponseDTO<>(null, "OrderDetails is null or empty"));
+        }
 
-        if (!orderRepository.existsById(order.getOrderId())) {
-            logger.error("Order with ID {} not found", orderId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ResponseDTO<>(null, "Order with ID: " + orderId + " not found"));
+        if (order.getCustomer() == null || order.getCustomer().getCustomerId() == null
+                || order.getCustomer().getCustomerId().isBlank()) {
+            logger.error("Customer or CustomerId is null or blank");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ResponseDTO<>(null, "Customer or CustomerId is null or blank"));
         }
 
         try {
-            order.setUpdatedAt(LocalDateTime.now());
+            String orderId = order.getOrderId();
 
-            Order orderUpdated = orderRepository.save(order);
+            if (!orderRepository.existsById(orderId)) {
+                logger.error("Order with ID {} not found", orderId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ResponseDTO<>(null, "Order with ID: " + orderId + " not found"));
+            }
+
             for (OrderDetail orderDetail : order.getOrderDetails()) {
+                if (orderDetail.getProductColorSize() == null ||
+                        orderDetail.getProductColorSize().getProductColorSizeId() == null ||
+                        orderDetail.getProductColorSize().getProductColorSizeId().isBlank()) {
+
+                    logger.error("ProductColorSize is null or blank");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new ResponseDTO<>(null, "ProductColorSize is null or blank"));
+                }
+
+                Optional<ProductColorSize> productColorSizeOptional =
+                        productColorSizeRepository.findById(orderDetail.getProductColorSize().getProductColorSizeId());
+
+                if (productColorSizeOptional.isEmpty()) {
+                    logger.error("ProductColorSize not found");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new ResponseDTO<>(null, "ProductColorSize not found"));
+                }
+
+                ProductColorSize productColorSize = productColorSizeOptional.get();
+
+                List<OrderDetail> existingOrderDetail =
+                        orderDetailRepository.findByOrder_OrderIdAndProductColorSize_ProductColorSizeId(orderId,
+                                orderDetail.getProductColorSize().getProductColorSizeId());
+
+                if (!existingOrderDetail.isEmpty()) {
+                    int oldQuantity = existingOrderDetail.get(0).getQuantity();
+                    int newQuantity = orderDetail.getQuantity();
+                    int difference = newQuantity - oldQuantity;
+
+                    if (difference > 0) {
+                        if (productColorSize.getQuantity() < difference) {
+                            logger.error("Not enough quantity in stock");
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                    .body(new ResponseDTO<>(null, "Not enough quantity in stock"));
+                        }
+                        productColorSize.setQuantity(productColorSize.getQuantity() - difference);
+                    } else if (difference < 0) {
+                        productColorSize.setQuantity(productColorSize.getQuantity() + Math.abs(difference));
+                    }
+                } else {
+                    if (productColorSize.getQuantity() < orderDetail.getQuantity()) {
+                        logger.error("Not enough quantity in stock");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(new ResponseDTO<>(null, "Not enough quantity in stock"));
+                    }
+                    productColorSize.setQuantity(productColorSize.getQuantity() - orderDetail.getQuantity());
+                }
+
+                productColorSizeRepository.save(productColorSize);
                 orderDetail.setOrder(new Order(order.getOrderId()));
                 orderDetailRepository.save(orderDetail);
             }
-            logger.info("Order updated successfully with ID: {}", orderUpdated);
+
+            logger.info("Order updated successfully with ID: {}", orderId);
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ResponseDTO<>(orderUpdated, "Order updated successfully"));
+                    .body(new ResponseDTO<>(order, "Order updated successfully"));
         } catch (Exception e) {
             logger.error("Error occurred while updating order: {} ", order.getOrderId(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseDTO<>(null,
-                            "Error occurred while updating order" + e.getMessage()));
+                    .body(new ResponseDTO<>(null, "Error occurred while updating order" + e.getMessage()));
         }
     }
 
@@ -248,7 +347,8 @@ public class OrderService implements IOrder {
                 case YEAR -> endDate.minusYears(quantity);
                 default -> throw new IllegalArgumentException("Invalid period type");
             };
-            List<Order> orders = orderRepository.findByOrderStatusAndDateBetween(OrderStatus.DELIVERED, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+            List<Order> orders = orderRepository
+                    .findByOrderStatusAndDateBetween(OrderStatus.DELIVERED, startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
 
             double total = orders.stream()
                     .mapToDouble(Order::getTotalPrice)

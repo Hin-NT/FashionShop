@@ -21,7 +21,8 @@ public class ProductController {
     private final IProduct productService;
 
     @GetMapping
-    public ResponseEntity<ResponseDTO<List<ProductDTO>>> getAllProducts() {
+    public ResponseEntity<ResponseDTO<List<ProductDTO>>> getAllProducts(
+    ) {
         return productService.getAll();
     }
 
@@ -59,4 +60,5 @@ public class ProductController {
         }
         return productService.findProductByProductName(productName.trim());
     }
+
 }

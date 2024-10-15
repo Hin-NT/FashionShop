@@ -1,7 +1,6 @@
 package com.example.FashionShop.dto;
 
 import com.example.FashionShop.model.Category;
-import com.example.FashionShop.model.Product;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,15 +13,16 @@ public class CategoryDTO {
 
     String categoryId;
     String categoryName;
-    List<String> productNames;
+    List<ProductDTO> products;
 
     public CategoryDTO(Category category, int choose) {
         this.categoryId = category.getCategoryId();
         this.categoryName = category.getCategoryName();
         if(choose == 1) {
-            this.productNames = category.getProducts().stream()
-                    .map(Product::getProductName)
+            this.products = category.getProducts().stream()
+                    .map(product -> new ProductDTO(product, 1))
                     .toList();
         }
     }
+
 }

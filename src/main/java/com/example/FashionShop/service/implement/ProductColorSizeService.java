@@ -93,7 +93,7 @@ public class ProductColorSizeService implements IProductColorSize {
                     .map(existing -> {
                         ProductColorSize productColorSizeUpdated = productColorSizeRepository.save(existing);
                         return ResponseEntity.status(HttpStatus.OK)
-                                .body(new ResponseDTO<>(productColorSizeUpdated,
+                                .body(new ResponseDTO<>(productColorSize,
                                         "Product color size updated successfully"));
                     })
                     .orElseGet(() -> {

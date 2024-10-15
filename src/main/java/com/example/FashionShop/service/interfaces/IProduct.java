@@ -9,4 +9,6 @@ import java.util.List;
 
 public interface IProduct extends IService<Product, ProductDTO> {
     ResponseEntity<ResponseDTO<List<ProductDTO>>> findProductByProductName(String productName);
+
+    ResponseEntity<ResponseDTO<List<ProductDTO>>> getAll(int page, int limit);
 }

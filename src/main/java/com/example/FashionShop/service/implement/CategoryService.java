@@ -30,73 +30,63 @@ public class CategoryService implements ICategory {
             List<Category> categories = categoryRepository.findAll();
             if (categories.isEmpty()) {
                 logger.info("No categories found");
-                return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(new ResponseDTO<>(null, "No Categories found"));
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new ResponseDTO<>(null, "No categories found"));
             }
             List<CategoryDTO> categoryDTOs = this.convertEntityToDTO(categories);
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ResponseDTO<>(categoryDTOs, "Categories retrieved successfully"));
+            logger.info("Retrieved Categories successfully");
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(categoryDTOs, "Retrieved Categories successfully"));
         } catch (Exception e) {
-            logger.error("Error occurred while fetching categories: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseDTO<>(null,
-                            "Error occurred while fetching categories: " + e.getMessage()));
+            logger.error("Error while retrieving Categories");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO<>(null, "Error while retrieving Categories" + e.getMessage()));
         }
     }
 
     @Override
     public ResponseEntity<ResponseDTO<Category>> create(Category category) {
+
         LocalDateTime currentDateTime = LocalDateTime.now();
         category.setCreatedAt(currentDateTime);
         category.setUpdatedAt(currentDateTime);
 
-        if (category.getCategoryId() != null && categoryRepository.existsById(category.getCategoryId())) {
-            logger.warn("Category with ID: {} already exists", category.getCategoryId());
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ResponseDTO<>(null,
-                            "Category with ID: " + category.getCategoryId() + " already exists"));
+        if (category.getCategoryName() == null || category.getCategoryName().isEmpty()) {
+            logger.info("Category name is null or empty");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO<>(null, "Category name is null"));
+        }
+
+        List<Category> categories = categoryRepository.findCategoriesByCategoryName(category.getCategoryName());
+        if (!categories.isEmpty()) {
+            logger.info("CategoryName already exists");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ResponseDTO<>(null, "CategoryName already exists"));
         }
 
         try {
             categoryRepository.save(category);
-            logger.info("Category created successfully with ID: {}", category.getCategoryId());
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ResponseDTO<>(category, "Category created successfully"));
+            logger.info("Category created successfully");
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(category, "Category created successfully"));
         } catch (Exception e) {
             logger.error("Error occurred while creating category: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseDTO<>(null,
-                            "Error occurred while creating category: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO<>(null, "Error occurred while creating category: " + e.getMessage()));
         }
     }
 
     @Override
     public ResponseEntity<ResponseDTO<CategoryDTO>> findById(Category category) {
-
         if (category == null || category.getCategoryId() == null) {
-            logger.warn("Category or categoryId is null");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ResponseDTO<>(null, "Category or categoryId is null"));
+            logger.info("Category not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseDTO<>(null, "Category not found"));
         }
 
         try {
             Optional<Category> categoryOptional = categoryRepository.findById(category.getCategoryId());
             if (categoryOptional.isPresent()) {
-                logger.info("Category found with ID: {}", category.getCategoryId());
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResponseDTO<>(new CategoryDTO(categoryOptional.get(), 1),
-                                "Category found with ID: " + category.getCategoryId()));
-            } else {
-                logger.info("Category not found with ID: {}", category.getCategoryId());
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ResponseDTO<>(null,
-                                "Category not found with ID: " + category.getCategoryId()));
+                logger.info("Category found");
+                return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(new CategoryDTO(categoryOptional.get(), 0), "Category found"));
             }
+            logger.info("Category not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseDTO<>(null, "Category not found"));
         } catch (Exception e) {
-            logger.error("Error occurred while finding category: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseDTO<>(null,
-                            "Error occurred while finding category: " + e.getMessage()));
+            logger.error("Error occurred while retrieving Category: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO<>(null, "Error occurred while retrieving Category: " + e.getMessage()));
         }
     }
 
@@ -159,17 +149,18 @@ public class CategoryService implements ICategory {
     public ResponseEntity<ResponseDTO<List<CategoryDTO>>> findCategoryByCategoryName(String categoryName) {
         try {
             List<Category> categories = categoryRepository.findCategoriesByCategoryName(categoryName);
+
             if (categories.isEmpty()) {
-                logger.info("Category not found with name {}", categoryName);
-                return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(null, "Category with name " + categoryName + " not found"));
+                logger.info("No categories found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseDTO<>(null, "No categories found"));
             }
+
             List<CategoryDTO> categoryDTOs = this.convertEntityToDTO(categories);
-            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(categoryDTOs, "Categories retrieved successfully"));
+            logger.info("Retrieved Categories successfully");
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(categoryDTOs, "Retrieved Categories successfully"));
         } catch (Exception e) {
-            logger.error("Error occurred while finding category: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseDTO<>(null,
-                            "Error occurred while finding category: " + e.getMessage()));
+            logger.error("Error occurred while retrieving category: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO<>(null, "Error occurred while retrieving category: " + e.getMessage()));
         }
     }
 
@@ -178,4 +169,5 @@ public class CategoryService implements ICategory {
                 .map(category -> new CategoryDTO(category, 0))
                 .toList();
     }
+
 }

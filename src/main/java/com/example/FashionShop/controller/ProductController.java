@@ -22,8 +22,9 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<ResponseDTO<List<ProductDTO>>> getAllProducts(
-    ) {
-        return productService.getAll();
+            @RequestParam("page") int page,
+            @RequestParam("limit") int limit) {
+        return productService.getAll(page, limit);
     }
 
     @GetMapping("/{productId}")

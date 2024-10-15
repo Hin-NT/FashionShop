@@ -3,7 +3,6 @@ package com.example.FashionShop.service.implement;
 import com.example.FashionShop.dto.ProductDTO;
 import com.example.FashionShop.dto.ResponseDTO;
 import com.example.FashionShop.model.Product;
-import com.example.FashionShop.model.Style;
 import com.example.FashionShop.repository.CategoryRepository;
 import com.example.FashionShop.repository.ProductRepository;
 import com.example.FashionShop.repository.StyleRepository;
@@ -12,6 +11,9 @@ import com.example.FashionShop.utils.Util;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -60,23 +62,47 @@ public class ProductService implements IProduct {
 
     @Override
     public ResponseEntity<ResponseDTO<List<ProductDTO>>> getAll() {
-        try {
+//        try {
+//
+//            List<Product> products = productRepository.findAll();
+//            if (products.isEmpty()) {
+//                logger.info("No product found");
+//                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+//                        .body(new ResponseDTO<>(null, "No product found"));
+//            }
+//            List<ProductDTO> productDTOs = this.convertProductToProductDTO(products);
+//            logger.info("Product found");
+//            return ResponseEntity.status(HttpStatus.OK)
+//                    .body(new ResponseDTO<>(productDTOs, "Product found"));
+//        } catch (Exception e) {
+//            logger.error("Error occurred while finding products");
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(new ResponseDTO<>(null,
+//                            "Error occurred while finding products" + e.getMessage()));
+//        }
+        return null;
+    }
 
-            List<Product> products = productRepository.findAll();
-            if (products.isEmpty()) {
-                logger.info("No product found");
+    @Override
+    public ResponseEntity<ResponseDTO<List<ProductDTO>>> getAll(int page, int limit) {
+        try {
+            Pageable pageable = PageRequest.of(page, limit);
+            Page<Product> productPage = productRepository.findAll(pageable);
+
+            if (productPage.isEmpty()) {
+                logger.info("No products found");
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(new ResponseDTO<>(null, "No product found"));
+                        .body(new ResponseDTO<>(null, "No products found"));
             }
-            List<ProductDTO> productDTOs = this.convertProductToProductDTO(products);
-            logger.info("Product found");
+
+            List<ProductDTO> productDTOs = this.convertProductToProductDTO(productPage.getContent());
+            logger.info("Products found");
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ResponseDTO<>(productDTOs, "Product found"));
+                    .body(new ResponseDTO<>(productDTOs, "Products found"));
         } catch (Exception e) {
-            logger.error("Error occurred while finding products");
+            logger.error("Error occurred while finding products: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseDTO<>(null,
-                            "Error occurred while finding products" + e.getMessage()));
+                    .body(new ResponseDTO<>(null, "Error occurred while finding products: " + e.getMessage()));
         }
     }
 

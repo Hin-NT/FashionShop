@@ -15,7 +15,7 @@ public class ReviewDTO {
     int rating;
     String comment;
     CustomerDTO customer;
-    String productColorSizeId;
+    ProductColorSizeDTO productColorSizeId;
 
     public ReviewDTO(Review review) {
         this.reviewId = review.getReviewId();
@@ -29,7 +29,7 @@ public class ReviewDTO {
         }
 
         if (review.getProductColorSize() != null) {
-            this.productColorSizeId = review.getProductColorSize().getProductColorSizeId();
+            this.productColorSizeId = new ProductColorSizeDTO(review.getProductColorSize(), 0);
         } else {
             this.productColorSizeId = null;
         }

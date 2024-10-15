@@ -20,8 +20,8 @@ public class OrderDTO {
     OrderStatus orderStatus;
     String paymentMethod;
     String shippingAddress;
-    List<String> orderDetailIds;
-    String customerId;
+    List<OrderDetailDTO> orderDetails;
+    CustomerDTO customer;
 
     public OrderDTO(Order order, int choose) {
         if (order != null) {
@@ -32,16 +32,17 @@ public class OrderDTO {
             this.shippingAddress = order.getShippingAddress();
 
             if (choose == 1) {
-                this.orderDetailIds = order.getOrderDetails().stream()
-                        .map(orderDetail -> orderDetail.getOrderDetailId())
+                this.orderDetails = order.getOrderDetails().stream()
+                        .map(orderDetail -> new OrderDetailDTO(orderDetail))
                         .collect(Collectors.toList());
             }
 
             if (order.getCustomer() != null) {
-                this.customerId = order.getCustomer().getCustomerId();
+                this.customer = new CustomerDTO(order.getCustomer(), 0);
             } else {
-                this.customerId = null;
+                this.customer = null;
             }
         }
     }
+
 }

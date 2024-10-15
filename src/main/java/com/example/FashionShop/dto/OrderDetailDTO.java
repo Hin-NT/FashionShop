@@ -14,8 +14,8 @@ public class OrderDetailDTO {
     String orderDetailId;
     int quantity;
     double price;
-    String orderId;
-    String productColorSizeId;
+    OrderDTO order;
+    ProductColorSizeDTO productColorSize;
 
     public OrderDetailDTO(OrderDetail orderDetail) {
         this.orderDetailId = orderDetail.getOrderDetailId();
@@ -23,11 +23,11 @@ public class OrderDetailDTO {
         this.price = orderDetail.getPrice();
 
         if (orderDetail.getOrder() != null) {
-            this.orderId = orderDetail.getOrder().getOrderId();
+            this.order = new OrderDTO(orderDetail.getOrder(), 0);
         } else {
-            this.orderId = null;
+            this.order = null;
         }
 
-        this.productColorSizeId = orderDetail.getProductColorSize().getProductColorSizeId();
+        this.productColorSize = new ProductColorSizeDTO(orderDetail.getProductColorSize(), 0);
     }
 }

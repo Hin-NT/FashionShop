@@ -34,6 +34,8 @@ public class ProductColorSize extends BaseEntity {
     @JoinColumn(name = "size_id")
     Size size;
 
+
+
     @Column(name = "price")
     double price;
 

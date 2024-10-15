@@ -1,6 +1,5 @@
 package com.example.FashionShop.dto;
 
-import com.example.FashionShop.model.Discount;
 import com.example.FashionShop.model.ProductDiscount;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

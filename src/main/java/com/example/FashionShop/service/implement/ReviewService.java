@@ -160,7 +160,7 @@ public class ReviewService implements IReview {
             Review reviewUpdated = reviewRepository.save(review);
             logger.info("Review updated successfully: {}", reviewUpdated);
             return ResponseEntity.status(HttpStatus.OK).body(new ResponseDTO<>(
-                    reviewUpdated, "Review updated successfully"));
+                    review, "Review updated successfully"));
         } catch (Exception e) {
             logger.error("Error occurred while updating review: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ResponseDTO<>(

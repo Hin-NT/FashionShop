@@ -18,8 +18,8 @@ public class CustomerDTO {
     String customerEmail;
     String phoneNumber;
     String address;
-    List<String> reviewIds;
-    List<String> orderIds;
+    List<ReviewDTO> reviews;
+    List<OrderDTO> orders;
 
     public CustomerDTO(Customer customer, int choose) {
         if (customer != null) {
@@ -30,14 +30,14 @@ public class CustomerDTO {
             this.address = customer.getAddress();
 
             if (choose == 1) {
-                this.reviewIds = customer.getReviews()
+                this.reviews = customer.getReviews()
                         .stream()
-                        .map(review -> review.getReviewId())
+                        .map(review -> new ReviewDTO(review))
                         .toList();
 
-                this.orderIds = customer.getOrders()
+                this.orders = customer.getOrders()
                         .stream()
-                        .map(order -> order.getOrderId())
+                        .map(order -> new OrderDTO(order, 0))
                         .toList();
             }
         } else {
@@ -46,8 +46,8 @@ public class CustomerDTO {
             this.customerEmail = null;
             this.phoneNumber = null;
             this.address = null;
-            this.reviewIds = null;
-            this.orderIds = null;
+            this.reviews = null;
+            this.orders = null;
         }
     }
 }

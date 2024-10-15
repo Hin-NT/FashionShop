@@ -1,6 +1,5 @@
 package com.example.FashionShop.dto;
 
-import com.example.FashionShop.model.Product;
 import com.example.FashionShop.model.Style;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -16,7 +15,7 @@ public class StyleDTO {
 
     String styleId;
     String styleName;
-    List<String> productIds;
+    List<ProductDTO> products;
 
     public StyleDTO(Style style, int choose) {
         if (style != null) {
@@ -24,15 +23,15 @@ public class StyleDTO {
             this.styleName = style.getStyleName();
 
             if (choose == 1) {
-                this.productIds = style.getProducts()
+                this.products = style.getProducts()
                         .stream()
-                        .map(Product::getProductId)
+                        .map(product -> new ProductDTO(product, 0))
                         .toList();
             }
         } else {
             this.styleId = null;
             this.styleName = null;
-            this.productIds = List.of();
+            this.products = List.of();
         }
     }
 

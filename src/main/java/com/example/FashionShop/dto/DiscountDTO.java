@@ -1,7 +1,6 @@
 package com.example.FashionShop.dto;
 
 import com.example.FashionShop.model.Discount;
-import com.example.FashionShop.model.ProductDiscount;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,7 +17,7 @@ public class DiscountDTO {
     String discountStatus;
     LocalDateTime startTime;
     LocalDateTime endTime;
-    List<String> productDiscountIds;
+    List<ProductDiscountDTO> productDiscounts;
 
     public DiscountDTO(Discount discount, int choose) {
         if (discount != null) {
@@ -29,9 +28,9 @@ public class DiscountDTO {
             this.endTime = discount.getEndTime();
 
             if (choose == 1) {
-                this.productDiscountIds = discount.getProductDiscountList()
+                this.productDiscounts = discount.getProductDiscountList()
                         .stream()
-                        .map(ProductDiscount::getProductDiscountId)
+                        .map(productDiscount -> new ProductDiscountDTO(productDiscount))
                         .toList();
             }
         }

@@ -3,13 +3,9 @@ package com.example.FashionShop.dto;
 import com.example.FashionShop.enums.ProductStatus;
 import com.example.FashionShop.model.ProductColorSize;
 import com.example.FashionShop.model.Review;
-import com.example.FashionShop.service.implement.ReviewService;
 import lombok.AccessLevel;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -17,11 +13,9 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProductColorSizeDTO {
 
-
-
     String productColorSizeId;
     ProductColorDTO productColor;
-    String sizeId;
+    SizeDTO sizeId;
     double price;
     int quantity;
     ProductStatus productStatus;
@@ -32,7 +26,7 @@ public class ProductColorSizeDTO {
     public ProductColorSizeDTO(ProductColorSize productColorSize, int choose) {
         this.productColorSizeId = productColorSize.getProductColorSizeId();
         this.productColor = new ProductColorDTO(productColorSize.getProductColor(), 0);
-        this.sizeId = productColorSize.getSize().getSizeId();
+        this.sizeId = new SizeDTO(productColorSize.getSize());
         this.price = productColorSize.getPrice();
         this.quantity = productColorSize.getQuantity();
         this.productStatus = productColorSize.getProductStatus();

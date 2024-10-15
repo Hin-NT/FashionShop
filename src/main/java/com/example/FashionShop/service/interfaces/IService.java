@@ -1,6 +1,5 @@
 package com.example.FashionShop.service.interfaces;
 
-
 import com.example.FashionShop.dto.ResponseDTO;
 import org.springframework.http.ResponseEntity;
 

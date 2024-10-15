@@ -31,4 +31,5 @@ public interface ProductColorSizeRepository extends JpaRepository<ProductColorSi
             @Param("startPrice") Double startPrice,
             @Param("endPrice") Double endPrice
     );
+
 }

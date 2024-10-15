@@ -14,7 +14,7 @@ public interface IOrder extends IService<Order, OrderDTO> {
 
     Order getOrder(String orderId);
 
-     ResponseEntity<Double> getTotalRevenueByPeriodTime(PeriodType periodType, long quantity);
+    ResponseEntity<Double> getTotalRevenueByPeriodTime(PeriodType periodType, long quantity);
 
     ResponseEntity<String> updateOrderStatus(String orderId, OrderStatus orderStatus);
 }
